@@ -3,6 +3,7 @@ const Category = require("../models/category");
 const InstrumentInstance = require("../models/instrumentinstance");
 
 const asyncHandler = require("express-async-handler");
+const { body, validationResult } = require("express-validator");
 
 exports.index = asyncHandler(async (req, res, next) => {
   // Get details of instruments, instrument instances, and category counts (in parallel)
@@ -57,13 +58,75 @@ exports.instrument_detail = asyncHandler(async (req, res, next) => {
 
 // Display instrument create form on GET.
 exports.instrument_create_get = asyncHandler(async (req, res, next) => {
-  res.send("NOT IMPLEMENTED: Instrument create GET");
+  // Get all categories which we can use for adding to our instrument.
+  const allCategories = await Category.find().sort({ name: 1 }).exec();
+
+  res.render("instrument_form", {
+    title: "Create Instrument",
+    categories: allCategories,
+  });
 });
 
+
 // Handle instrument create on POST.
-exports.instrument_create_post = asyncHandler(async (req, res, next) => {
-  res.send("NOT IMPLEMENTED: Instrument create POST");
-});
+exports.instrument_create_post = [
+  // Convert the category to an array.
+  (req, res, next) => {
+    if (!Array.isArray(req.body.category)) {
+      req.body.category =
+        typeof req.body.category === "undefined" ? [] : [req.body.category];
+    }
+    next();
+  },
+
+  // Validate and sanitize fields.
+  body("name", "Name must not be empty.")
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+  body("description", "Description must not be empty.")
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+  body("category.*").escape(),
+  // Process request after validation and sanitization.
+
+  asyncHandler(async (req, res, next) => {
+    // Extract the validation errors from a request.
+    const errors = validationResult(req);
+
+    // Create an Instrument object with escaped and trimmed data.
+    const instrument = new Instrument({
+      name: req.body.name,
+      description: req.body.description,
+      category: req.body.category,
+    });
+
+    if (!errors.isEmpty()) {
+      // There are errors. Render form again with sanitized values/error messages.
+
+      // Get all categories for form.
+      const allCategories = await Category.find().sort({ name: 1 }).exec();
+
+      // Mark our selected genres as checked.
+      for (const category of allCategories) {
+        if (instrument.category.includes(category._id)) {
+          category.checked = "true";
+        }
+      }
+      res.render("instrument_form", {
+        title: "Create Instrument",
+        categories: allCategories,
+        instrument: instrument,
+        errors: errors.array(),
+      });
+    } else {
+      // Data from form is valid. Save instrument.
+      await instrument.save();
+      res.redirect(instrument.url);
+    }
+  }),
+];
 
 // Display instrument delete form on GET.
 exports.instrument_delete_get = asyncHandler(async (req, res, next) => {

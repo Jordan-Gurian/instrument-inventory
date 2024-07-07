@@ -1,5 +1,7 @@
 const InstrumentInstance = require("../models/instrumentinstance");
+const Instrument = require("../models/instrument");
 const asyncHandler = require("express-async-handler");
+const { body, validationResult } = require("express-validator");
 
 // Display list of all InstrumentInstances.
 exports.instrumentinstance_list = asyncHandler(async (req, res, next) => {
@@ -32,13 +34,57 @@ exports.instrumentinstance_detail = asyncHandler(async (req, res, next) => {
 
 // Display InstrumentInstance create form on GET.
 exports.instrumentinstance_create_get = asyncHandler(async (req, res, next) => {
-  res.send("NOT IMPLEMENTED: InstrumentInstance create GET");
+  const allInstruments = await Instrument.find({}, "name").sort({ name: 1 }).exec();
+
+  res.render("instrumentinstance_form", {
+    title: "Create Instrument Instance",
+    instrument_list: allInstruments,
+  });
 });
 
 // Handle InstrumentInstance create on POST.
-exports.instrumentinstance_create_post = asyncHandler(async (req, res, next) => {
-  res.send("NOT IMPLEMENTED: InstrumentInstance create POST");
-});
+exports.instrumentinstance_create_post = [
+  // Validate and sanitize fields.
+  body("instrument", "Instrument must be specified").trim().isLength({ min: 1 }).escape(),
+  body("price", "Price must be specified")
+    .trim()
+    .isLength({ min: 2 })
+    .escape(),
+  body("condition").escape(),
+
+  // Process request after validation and sanitization.
+  asyncHandler(async (req, res, next) => {
+    // Extract the validation errors from a request.
+    const errors = validationResult(req);
+
+    // Create a BookInstance object with escaped and trimmed data.
+    const instrumentInstance = new InstrumentInstance({
+      instrument: req.body.instrument,
+      price: req.body.price,
+      condition: req.body.condition,
+    });
+
+    if (!errors.isEmpty()) {
+      // There are errors.
+      // Render form again with sanitized values and error messages.
+      const allInstruments = await Instrument.find({}, "name").sort({ name: 1 }).exec();
+
+      res.render("instrumentinstance_form", {
+        title: "Create Instrument Instance",
+        instrument_list: allInstruments,
+        selected_instrument: instrumentInstance.instrument._id,
+        errors: errors.array(),
+        instrumentinstance: instrumentInstance,
+      });
+      return;
+    } else {
+      // Data from form is valid
+      await instrumentInstance.save();
+      res.redirect(instrumentInstance.url);
+    }
+  }),
+];
+
 
 // Display InstrumentInstance delete form on GET.
 exports.instrumentinstance_delete_get = asyncHandler(async (req, res, next) => {

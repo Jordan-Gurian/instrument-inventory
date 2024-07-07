@@ -9,6 +9,7 @@ block content
       a(href=val.url) #{val.name}
       if index < instrument.category.length - 1
         |,&nbsp;
+  p #[strong QTY in stock: ] #{instrument.numInStock}
 
   div(style='margin-left:20px;margin-top:20px')
     h2(style='font-size: 1.5rem;') Inventory

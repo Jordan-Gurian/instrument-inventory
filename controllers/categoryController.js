@@ -1,6 +1,7 @@
 const Category = require("../models/category");
 const Instrument = require("../models/instrument")
 const asyncHandler = require("express-async-handler");
+const { body, validationResult } = require("express-validator");
 
 // Display list of all Categories.
 exports.category_list = asyncHandler(async (req, res, next) => {
@@ -34,14 +35,55 @@ exports.category_detail = asyncHandler(async (req, res, next) => {
 });
 
 // Display Category create form on GET.
-exports.category_create_get = asyncHandler(async (req, res, next) => {
-  res.send("NOT IMPLEMENTED: Category create GET");
-});
+exports.category_create_get = (req, res, next) => {
+  res.render("category_form", { title: "Create Category" });
+};
 
 // Handle Category create on POST.
-exports.category_create_post = asyncHandler(async (req, res, next) => {
-  res.send("NOT IMPLEMENTED: Category create POST");
-});
+exports.category_create_post = [
+  // Validate and sanitize fields.
+  body("name")
+    .trim()
+    .isLength({ min: 1 })
+    .escape()
+    .withMessage("Category name must be specified.")
+    .isAlphanumeric()
+    .withMessage("Category name has non-alphanumeric characters."),
+  body("description")
+    .trim()
+    .isLength({ min: 1 })
+    .escape()
+    .withMessage("Category description must be specified."),
+
+  // Process request after validation and sanitization.
+  asyncHandler(async (req, res, next) => {
+    // Extract the validation errors from a request.
+    const errors = validationResult(req);
+
+    // Create Category object with escaped and trimmed data
+    const category = new Category({
+      name: req.body.name,
+      description: req.body.description,
+    });
+
+    if (!errors.isEmpty()) {
+      // There are errors. Render form again with sanitized values/errors messages.
+      res.render("category_form", {
+        title: "Create Category",
+        category: category,
+        errors: errors.array(),
+      });
+      return;
+    } else {
+      // Data from form is valid.
+
+      // Save author.
+      await category.save();
+      // Redirect to new category record.
+      res.redirect(category.url);
+    }
+  }),
+];
 
 // Display Category delete form on GET.
 exports.category_delete_get = asyncHandler(async (req, res, next) => {
