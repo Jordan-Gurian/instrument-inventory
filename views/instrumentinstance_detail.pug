@@ -1,0 +1,17 @@
+extends layout
+
+block content
+
+  h1 ID: #{instrumentinstance._id}
+
+  p #[strong Instrument: ]
+    a(href=instrumentinstance.instrument.url) #{instrumentinstance.instrument.name}
+  p #[strong Price:] #{instrumentinstance.price}
+
+  p #[strong Condition: ]
+    if instrumentinstance.condition=='New'
+      span.text-success #{instrumentinstance.condition}
+    else if instrumentinstance.condition=='Used - Fair'
+      span.text-danger #{instrumentinstance.condition}
+    else
+      span.text-warning #{instrumentinstance.condition}

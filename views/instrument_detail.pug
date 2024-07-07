@@ -1,0 +1,29 @@
+extends layout
+
+block content
+  h1 Instrument: #{instrument.name}
+
+  p #[strong Description:] #{instrument.description}
+  p #[strong Category: ]
+    each val, index in instrument.category
+      a(href=val.url) #{val.name}
+      if index < instrument.category.length - 1
+        |,&nbsp;
+
+  div(style='margin-left:20px;margin-top:20px')
+    h2(style='font-size: 1.5rem;') Inventory
+
+    each val in instrument_instances
+      hr
+      if val.condition=='New'
+        p.text-success #{val.condition}
+      else if val.condition=='Used - Fair'
+        p.text-danger #{val.condition}
+      else
+        p.text-warning #{val.condition}
+      p #[strong Price: #{val.price}]
+      p #[strong Id: ]
+        a(href=val.url) #{val._id}
+
+    else
+      p Instrument is out of stock.

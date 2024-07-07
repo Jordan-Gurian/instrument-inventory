@@ -1,0 +1,18 @@
+extends layout
+
+block content
+  h1= title
+
+  if instrumentinstance_list.length
+    ul
+      each val in instrumentinstance_list
+        li
+          a(href=val.url) #{val.instrument.name} : #{val.price} -&nbsp;
+          if val.condition=='New'
+            span.text-success #{val.condition}
+          else if val.condition=='Used - Fair'
+            span.text-danger #{val.condition}
+          else
+            span.text-warning #{val.condition}
+  else
+    p This instrument is currently not in stock.

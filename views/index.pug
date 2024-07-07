@@ -2,4 +2,13 @@ extends layout
 
 block content
   h1= title
-  p Welcome to #{title}
+  p Welcome to #[em Instrument Inventory]!
+
+  h2 Dynamic content
+
+  p The library has the following record counts:
+
+  ul
+    li #[strong Instruments:] !{instrument_count}
+    li #[strong Inventory Available:] !{instrument_instance_count}
+    li #[strong Categories:] !{category_count}

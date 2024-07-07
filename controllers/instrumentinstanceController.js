@@ -3,12 +3,31 @@ const asyncHandler = require("express-async-handler");
 
 // Display list of all InstrumentInstances.
 exports.instrumentinstance_list = asyncHandler(async (req, res, next) => {
-  res.send("NOT IMPLEMENTED: InstrumentInstance list");
+  const allInstrumentInstances = await InstrumentInstance.find().populate("instrument").exec();
+
+  res.render("instrumentinstance_list", {
+    title: "Instrument Inventory List",
+    instrumentinstance_list: allInstrumentInstances,
+  });
 });
 
 // Display detail page for a specific InstrumentInstance.
 exports.instrumentinstance_detail = asyncHandler(async (req, res, next) => {
-  res.send(`NOT IMPLEMENTED: InstrumentInstance detail: ${req.params.id}`);
+  const instrumentInstance = await InstrumentInstance.findById(req.params.id)
+    .populate("instrument")
+    .exec();
+
+  if (instrumentInstance === null) {
+    // No results.
+    const err = new Error("Instrument id not found");
+    err.status = 404;
+    return next(err);
+  }
+
+  res.render("instrumentinstance_detail", {
+    title: "Instrument:",
+    instrumentinstance: instrumentInstance,
+  });
 });
 
 // Display InstrumentInstance create form on GET.

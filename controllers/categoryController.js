@@ -1,14 +1,36 @@
 const Category = require("../models/category");
+const Instrument = require("../models/instrument")
 const asyncHandler = require("express-async-handler");
 
 // Display list of all Categories.
 exports.category_list = asyncHandler(async (req, res, next) => {
-  res.send("NOT IMPLEMENTED: Category list");
+  const allCategories = await Category.find().sort({ name: 1 }).exec();
+  res.render("category_list", {
+    title: "Category List",
+    category_list: allCategories,
+  });
 });
 
 // Display detail page for a specific Category.
 exports.category_detail = asyncHandler(async (req, res, next) => {
-  res.send(`NOT IMPLEMENTED: Category detail: ${req.params.id}`);
+  // Get details of category and all their instruments (in parallel)
+  const [category, allInstrumentsByCategory] = await Promise.all([
+    Category.findById(req.params.id).exec(),
+    Instrument.find({ category: req.params.id }, "name description").exec(),
+  ]);
+
+  if (category === null) {
+    // No results.
+    const err = new Error("Category not found");
+    err.status = 404;
+    return next(err);
+  }
+
+  res.render("category_detail", {
+    title: "Category Detail",
+    category: category,
+    category_instruments: allInstrumentsByCategory,
+  });
 });
 
 // Display Category create form on GET.
